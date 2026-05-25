@@ -20,14 +20,14 @@ Platform patch：在 worker 启动前应用。适合影响全局行为、config 
 
 Worker patch：在 worker 侧应用。适合影响设备侧执行、模型 forward、算子替换、sampling、graph、权重加载等和 worker 生命周期绑定的改动。
 
-```mermaid
-flowchart LR
-    A[NPU platform selected] --> B[Apply platform patches]
-    B --> C[Engine / executor setup]
-    C --> D[Worker starts]
-    D --> E[Apply worker patches]
-    E --> F[Load model and execute]
-```
+| 步骤 | 阶段 | 说明 |
+| --- | --- | --- |
+| 1 | NPU platform selected | NPU platform 被选中 |
+| 2 | Apply platform patches | 应用 platform-level patches |
+| 3 | Engine / executor setup | 初始化 engine / executor |
+| 4 | Worker starts | Worker 启动 |
+| 5 | Apply worker patches | 应用 worker-level patches |
+| 6 | Load model and execute | 加载模型并执行 |
 
 判断 patch 放在哪里，核心看“它必须在什么时候生效”。如果放晚了，上游对象可能已经初始化，patch 可能无效或只影响部分进程。
 

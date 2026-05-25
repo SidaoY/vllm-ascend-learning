@@ -6,17 +6,13 @@
 
 ## 基本流程
 
-```mermaid
-flowchart LR
-    C[Current Context] --> P[Proposer]
-    P --> D[Draft Tokens]
-    D --> T[Target Model Verify]
-    T --> A{Accept?}
-    A -- accepted --> U[Append accepted tokens]
-    A -- rejected --> R[Sample corrected token]
-    U --> C
-    R --> C
-```
+| 步骤 | 阶段 | 说明 |
+| --- | --- | --- |
+| 1 | Current Context → Proposer | 输入当前上下文 |
+| 2 | Proposer → Draft Tokens | 提出候选 token |
+| 3 | Draft Tokens → Target Model Verify | 目标模型验证 |
+| 4 | Verify → Accept? | 接受则 append accepted tokens，拒绝则 sample corrected token |
+| 5 | 回到 Current Context | 循环至结束 |
 
 一次投机推理通常包括：
 

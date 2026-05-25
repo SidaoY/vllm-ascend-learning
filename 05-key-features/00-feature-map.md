@@ -4,23 +4,22 @@
 
 ## 一张关系图
 
-```mermaid
-flowchart TB
-    Workload[Workload: long context / high concurrency / MoE / PD] --> Scheduler[Scheduler]
-    Scheduler --> KV[KV cache management]
-    Scheduler --> Spec[Speculative decoding]
-    Scheduler --> LB[Load balancing]
-    KV --> Attention[Attention backend and block table]
-    CP[Context parallelism] --> Attention
-    CP --> KV
-    Spec --> KV
-    Spec --> Sampling[Sampling and output processor]
-    LB --> Distributed[Distributed runtime]
-    KV --> Distributed
-    CP --> Distributed
-    Distributed --> Worker[Ascend worker / model runner]
-    Attention --> Worker
-```
+| 来源 | 流向 | 目标 |
+| --- | --- | --- |
+| Workload (long context / high concurrency / MoE / PD) | → | Scheduler |
+| Scheduler | → | KV cache management |
+| Scheduler | → | Speculative decoding |
+| Scheduler | → | Load balancing |
+| KV cache management | → | Attention backend and block table |
+| Context parallelism | → | Attention backend and block table |
+| Context parallelism | → | KV cache management |
+| Speculative decoding | → | KV cache management |
+| Speculative decoding | → | Sampling and output processor |
+| Load balancing | → | Distributed runtime |
+| KV cache management | → | Distributed runtime |
+| Context parallelism | → | Distributed runtime |
+| Distributed runtime | → | Ascend worker / model runner |
+| Attention backend and block table | → | Ascend worker / model runner |
 
 这张图表达的是：
 

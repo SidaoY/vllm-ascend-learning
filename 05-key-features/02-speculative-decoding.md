@@ -6,22 +6,14 @@
 
 ## 数据流
 
-```mermaid
-sequenceDiagram
-    participant Req as Request state
-    participant Proposer as Proposer
-    participant Worker as Ascend model runner
-    participant Target as Target model verify
-    participant Sampler as Rejection sampler
-    participant Out as Output processor
-
-    Req->>Proposer: current tokens / hidden states
-    Proposer->>Worker: draft tokens
-    Worker->>Target: verify draft tokens
-    Target->>Sampler: logits / probabilities
-    Sampler->>Out: accepted tokens and corrected token
-    Out->>Req: update request state
-```
+| 步骤 | 发起方 | 接收方 | 动作 |
+| --- | --- | --- | --- |
+| 1 | Request state | Proposer | current tokens / hidden states |
+| 2 | Proposer | Ascend model runner | draft tokens |
+| 3 | Ascend model runner | Target model verify | verify draft tokens |
+| 4 | Target model verify | Rejection sampler | logits / probabilities |
+| 5 | Rejection sampler | Output processor | accepted tokens and corrected token |
+| 6 | Output processor | Request state | update request state |
 
 这条链路有两个关键点：
 

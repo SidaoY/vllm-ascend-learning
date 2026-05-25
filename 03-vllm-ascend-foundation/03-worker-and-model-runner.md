@@ -34,19 +34,11 @@ Model runner 负责：
 
 ## 数据流
 
-```mermaid
-flowchart LR
-    SO[SchedulerOutput] --> MR[NPU Model Runner]
-    MR --> State[Request states]
-    MR --> IB[NPU input batch]
-    MR --> BT[Block table / slot mapping]
-    MR --> AM[Attention metadata]
-    IB --> Model[Model forward]
-    BT --> Model
-    AM --> Model
-    Model --> Sample[Sampler]
-    Sample --> Out[ModelRunnerOutput]
-```
+| 阶段 | 组件 | 输入来源 | 产物 |
+| --- | --- | --- | --- |
+| 1 | NPU Model Runner | SchedulerOutput | Request states, NPU input batch, Block table, Attention metadata |
+| 2 | Model forward | NPU input batch, Block table, Attention metadata | Logits / Hidden States |
+| 3 | Sampler | Model forward 输出 | ModelRunnerOutput |
 
 这条链路里，最常见的 bug 来自状态不一致：scheduler 认为请求推进到了某个 token，worker 本地状态、block table 或 attention metadata 却没有同步到同一视图。
 

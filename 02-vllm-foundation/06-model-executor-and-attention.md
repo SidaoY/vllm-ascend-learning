@@ -43,17 +43,11 @@ Model executor 可以理解为“把 Hugging Face 风格模型变成高吞吐推
 
 Model runner 负责“本轮要算什么”和“输入张量怎么准备”；model executor 负责“模型结构怎么执行”。
 
-```mermaid
-flowchart LR
-    SO[SchedulerOutput] --> MR[Model Runner]
-    MR --> IB[Input Batch]
-    MR --> AM[Attention Metadata]
-    IB --> Model[Model Executor]
-    AM --> Model
-    Model --> Logits[Logits / Hidden States]
-    Logits --> Sampler[Sampler]
-    Sampler --> MRO[ModelRunnerOutput]
-```
+| 阶段 | 组件 | 输入来源 | 产物 |
+| --- | --- | --- | --- |
+| 1 | Model Runner | SchedulerOutput | Input Batch, Attention Metadata |
+| 2 | Model Executor | Input Batch, Attention Metadata | Logits / Hidden States |
+| 3 | Sampler | Logits / Hidden States | ModelRunnerOutput |
 
 如果 input ids、positions、block table 或 attention metadata 错了，模型 executor 可能只是“按错误输入正确执行”。所以排查模型输出异常时，要同时看 model runner 准备的数据和 model executor 的 forward。
 

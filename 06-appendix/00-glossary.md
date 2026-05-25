@@ -48,3 +48,25 @@
 | TTFT | Time To First Token | 从请求进入到首 token 输出的时间，常用于衡量 prefill 和排队体验。 | [01-08](../01-llm-basics/08-performance-metrics.md) |
 | TPOT | Time Per Output Token | 输出 token 平均耗时，常用于衡量 decode 性能。 | [01-08](../01-llm-basics/08-performance-metrics.md) |
 | ITL | Inter-token Latency | 相邻输出 token 的时间间隔，常用于观察流式输出抖动。 | [01-08](../01-llm-basics/08-performance-metrics.md) |
+| Goodput | 有效吞吐 | 排除被拒绝请求后实际成功服务的吞吐量指标。 | [01-08](../01-llm-basics/08-performance-metrics.md) |
+| CANN | Huawei Ascend Compute Architecture | 华为 Ascend NPU 软件栈，提供算子库、图引擎、运行时等核心能力。 | [00-02](../00-orientation/02-environment-and-workflow.md) |
+| torch-npu | PyTorch NPU 插件 | PyTorch 的 Ascend NPU 后端，使 PyTorch 能在 NPU 上运行。 | [00-02](../00-orientation/02-environment-and-workflow.md) |
+| Continuous batching | 连续批处理 | 同一个 batch 中的请求处于不同阶段（prefill / decode），动态增删请求，提升 GPU/NPU 利用率。 | [01-03](../01-llm-basics/03-prefill-decode-kv-cache.md) |
+| Token budget | Token 预算 | 每轮 scheduler step 允许推进的最大 token 数，用于平衡 prefill 和 decode。 | [02-04](../02-vllm-foundation/04-scheduler.md) |
+| Sampling params | 采样参数 | 控制 token 生成行为的参数集合，如 temperature、top_p、max_tokens、stop 等。 | [02-01](../02-vllm-foundation/01-entrypoints-and-api.md) |
+| Router / Gate | 路由 / 门控 | MoE 中为每个 token 选择应激活哪些 expert 的组件。 | [01-07](../01-llm-basics/07-moe-basics.md) |
+| Engine | 推理引擎 | 管理请求生命周期、串联 scheduler 和 worker 的核心组件。 | [02-03](../02-vllm-foundation/03-engine-and-worker.md) |
+| Model runner | 模型执行器 | worker 内负责将 scheduler output 转为模型输入、执行模型前向的组件。 | [02-03](../02-vllm-foundation/03-engine-and-worker.md) |
+| Input batch | 输入批次 | 在 worker/model runner 里，将多个请求的输入信息组织在一起的批次对象。 | [02-03](../02-vllm-foundation/03-engine-and-worker.md) |
+| Attention metadata | 注意力元数据 | 在 model runner 里组织好的、送给 attention backend 的元信息，包括 slot mapping、block table、seq len 等。 | [02-07](../02-vllm-foundation/07-attention-backends-and-pagedattention.md) |
+| Monkey patch | 猴子补丁 | 在运行时动态替换已有模块的方法或属性，vLLM Ascend 通过此机制适配上游行为。 | [03-02](../03-vllm-ascend-foundation/02-patch-mechanism.md) |
+| Platform registration | 平台注册 | vLLM 的插件机制，允许 vLLM Ascend 在 `__init__.py` 中注册 NPU backend。 | [03-01](../03-vllm-ascend-foundation/01-platform-registration.md) |
+| Custom op | 自定义算子 | 绕过 PyTorch 自动微分、直接调用底层 API（如 aclnn）实现的算子，通常用于 attention 和量化。 | [03-04](../03-vllm-ascend-foundation/04-attention-and-kernels.md) |
+| aclnn | Ascend Custom Library NN | Ascend CANN 中的神经网络算子库，常用于实现 custom op 或 kernel。 | [03-04](../03-vllm-ascend-foundation/04-attention-and-kernels.md) |
+| DSA | Dynamic Sparse Attention | 一类稀疏 attention 模型（如 DeepSeek），需要特殊的 attention 路径支持。 | [03-04](../03-vllm-ascend-foundation/04-attention-and-kernels.md) |
+| AscendStore | Ascend 共享存储 | Ascend 侧的 KV cache 共享存储实现，用于 KV pool 或 PD 分离场景。 | [05-01](../05-key-features/01-kv-cache-management.md) |
+| KV Connector | KV 连接器 | 负责 prefill 和 decode 节点间 KV cache 传输的逻辑组件。 | [03-05](../03-vllm-ascend-foundation/05-distributed-and-kv-transfer.md) |
+| External DP | 外部数据并行 | 一种跨实例的数据并行方案，将请求分发到多个 vLLM 实例处理。 | [05-04](../05-key-features/04-load-balancing.md) |
+| EPD | Elastic Prefill-Decode Disaggregation | 弹性 PD 分离方案，允许动态扩展 prefill 或 decode 的角色。 | [03-05](../03-vllm-ascend-foundation/05-distributed-and-kv-transfer.md) |
+| VLLM_COMMIT | vLLM 版本 commit | CI config 中记录的应与 vLLM Ascend 配合使用的上游 vLLM commit。 | [00-01](../00-orientation/01-repo-map.md) |
+| SOC_VERSION | 硬件型号 | 标识 Ascend 硬件版本的字符串，如 Ascend910B2、Ascend910C。 | [00-02](../00-orientation/02-environment-and-workflow.md) |

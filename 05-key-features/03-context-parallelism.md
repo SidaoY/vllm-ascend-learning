@@ -34,13 +34,10 @@ PCP 更关注 prefill 的 query/context 切分。它希望多个 rank 分担长 
 
 DCP 更关注 decode 的历史 KV 切分。它希望每个 rank 只持有或处理部分 context，从而缓解 decode 阶段 KV duplication 和容量压力。
 
-```mermaid
-flowchart TB
-    Prompt[Long prompt] --> PCP[PCP: split prefill context]
-    PCP --> KV[Distributed KV cache]
-    KV --> DCP[DCP: split decode context]
-    DCP --> Token[Next token]
-```
+| 阶段 | 输入 | 处理 | 输出 |
+| --- | --- | --- | --- |
+| 1 | Long prompt | PCP: split prefill context | Distributed KV cache |
+| 2 | Distributed KV cache | DCP: split decode context | Next token |
 
 从实现上看，PCP/DCP 都要求 attention metadata、block table、position、mask 和通信逻辑对切分方式有一致理解。
 

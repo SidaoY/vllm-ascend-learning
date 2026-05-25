@@ -4,19 +4,18 @@ vLLM Ascend 是 vLLM 的 Ascend NPU 后端适配层。它复用 vLLM 的服务�
 
 ## 整体关系
 
-```mermaid
-flowchart TB
-    User[User / OpenAI API / Offline LLM] --> VLLM[vLLM entrypoints and engine]
-    VLLM --> Scheduler[vLLM scheduler and KV manager]
-    Scheduler --> Executor[vLLM executor]
-    Executor --> AscendWorker[vLLM Ascend worker / model runner]
-    AscendWorker --> AscendAttention[Ascend attention backend]
-    AscendWorker --> AscendOps[Ascend ops / Triton / CANN / torch-npu]
-    AscendWorker --> Dist[Ascend distributed / HCCL / KV transfer]
-    Platform[NPUPlatform and env adaptation] --> VLLM
-    Patch[Platform and worker patches] --> VLLM
-    Patch --> AscendWorker
-```
+| 来源组件 | → | 目标组件 |
+| --- | --- | --- |
+| User / OpenAI API / Offline LLM | → | vLLM entrypoints and engine |
+| vLLM entrypoints and engine | → | vLLM scheduler and KV manager |
+| vLLM scheduler and KV manager | → | vLLM executor |
+| vLLM executor | → | vLLM Ascend worker / model runner |
+| vLLM Ascend worker / model runner | → | Ascend attention backend |
+| vLLM Ascend worker / model runner | → | Ascend ops / Triton / CANN / torch-npu |
+| vLLM Ascend worker / model runner | → | Ascend distributed / HCCL / KV transfer |
+| NPUPlatform and env adaptation | → | vLLM entrypoints and engine |
+| Platform and worker patches | → | vLLM entrypoints and engine |
+| Platform and worker patches | → | vLLM Ascend worker / model runner |
 
 可以把 vLLM Ascend 分成五类能力：
 
@@ -41,24 +40,16 @@ flowchart TB
 
 ## 启动到执行的粗流程
 
-```mermaid
-sequenceDiagram
-    participant CLI as vllm serve / LLM
-    participant Platform as NPUPlatform
-    participant Patch as Patch Layer
-    participant Engine as vLLM Engine
-    participant Worker as NPU Worker
-    participant Backend as Ascend Backend
-
-    CLI->>Platform: detect / select NPU platform
-    Platform->>Patch: apply platform-level patches
-    Platform->>Engine: update config and capabilities
-    Engine->>Worker: create worker / model runner
-    Worker->>Patch: apply worker-level patches
-    Worker->>Backend: initialize attention, ops, KV cache
-    Engine->>Worker: execute scheduler output
-    Worker->>Engine: return model runner output
-```
+| 步骤 | 发起方 | 接收方 | 动作 |
+| --- | --- | --- | --- |
+| 1 | vllm serve / LLM | NPUPlatform | detect / select NPU platform |
+| 2 | NPUPlatform | Patch Layer | apply platform-level patches |
+| 3 | NPUPlatform | vLLM Engine | update config and capabilities |
+| 4 | vLLM Engine | NPU Worker | create worker / model runner |
+| 5 | NPU Worker | Patch Layer | apply worker-level patches |
+| 6 | NPU Worker | Ascend Backend | initialize attention, ops, KV cache |
+| 7 | vLLM Engine | NPU Worker | execute scheduler output |
+| 8 | NPU Worker | vLLM Engine | return model runner output |
 
 这个流程里，patch 的时机很重要：有些 patch 必须在 engine 或 config 初始化前生效，有些 patch 只需要在 worker 侧生效。
 

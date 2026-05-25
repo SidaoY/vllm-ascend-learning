@@ -59,3 +59,12 @@
 ## 阅读建议
 
 基础概念先读本学习资料和 vLLM 文档；遇到具体 Ascend 行为，再读 vLLM Ascend user guide 和 developer guide；遇到底层算子、通信或图模式问题，再查 Ascend 官方资料。这样能避免一开始被大量硬件和系统细节淹没。
+
+## 本仓库内部索引
+
+- [学习路线图](../00-orientation/00-learning-map.md)：按阶段规划学习路径。
+- [仓库地图](../00-orientation/01-repo-map.md)：仓库关系、目录速览、新人读代码推荐路径。
+- [环境与工作流](../00-orientation/02-environment-and-workflow.md)：环境搭建、命令、日志、常见错误。
+- [代码阅读索引](01-code-reading-index.md)：按主题列出代码入口和搜索关键词。
+- [术语表](00-glossary.md)：快速确认术语含义。
+- [实验记录模板](03-experiment-template.md)：性能实验和复盘的实验模板。

@@ -4,32 +4,21 @@
 
 ## 端到端主线
 
-```mermaid
-sequenceDiagram
-    participant User as User / Client
-    participant API as Entrypoint
-    participant Engine as Engine
-    participant Sched as Scheduler
-    participant Exec as Executor
-    participant Worker as Worker / Model Runner
-    participant Out as Output Processor
-
-    User->>API: prompt / messages / sampling params
-    API->>Engine: internal request
-    Engine->>Sched: add request
-    loop engine step
-        Sched->>Sched: choose tokens and KV blocks
-        Sched->>Exec: scheduler output
-        Exec->>Worker: execute batch
-        Worker->>Worker: prepare inputs / run model / sample
-        Worker->>Exec: model runner output
-        Exec->>Sched: model output
-        Sched->>Engine: engine core outputs
-        Engine->>Out: process tokens
-        Out->>API: request outputs / stream chunks
-    end
-    API->>User: final response
-```
+| 步骤 | 发起方 | 接收方 | 动作 |
+| --- | --- | --- | --- |
+| 1 | User / Client | Entrypoint | prompt / messages / sampling params |
+| 2 | Entrypoint | Engine | internal request |
+| 3 | Engine | Scheduler | add request |
+| 4 | Scheduler | Scheduler | choose tokens and KV blocks |
+| 5 | Scheduler | Executor | scheduler output |
+| 6 | Executor | Worker / Model Runner | execute batch |
+| 7 | Worker / Model Runner | —  | prepare inputs / run model / sample |
+| 8 | Worker / Model Runner | Executor | model runner output |
+| 9 | Executor | Scheduler | model output |
+| 10 | Scheduler | Engine | engine core outputs |
+| 11 | Engine | Output Processor | process tokens |
+| 12 | Output Processor | Entrypoint | request outputs / stream chunks |
+| 13 | Entrypoint | User / Client | final response |
 
 这条链路中，scheduler 和 worker 是最容易混淆的两个角色：
 

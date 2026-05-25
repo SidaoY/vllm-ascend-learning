@@ -40,15 +40,12 @@ vLLM 使用 block/page 管理 KV cache。KV payload 本身没有减少，但 blo
 
 在 vLLM Ascend 中，scheduler 做出的 KV block 分配结果，需要被 worker/model runner 转换成 NPU attention backend 能消费的结构。这里的关键就是 block table 和 slot mapping。
 
-```mermaid
-flowchart LR
-    Scheduler[Scheduler KV allocation] --> Output[SchedulerOutput]
-    Output --> Worker[Ascend worker]
-    Worker --> Batch[NPU input batch]
-    Batch --> Table[Block table / slot mapping]
-    Table --> Attn[Ascend attention backend]
-    Attn --> Cache[KV cache buffer]
-```
+| 阶段 | 组件 | 输入 | 输出 |
+| --- | --- | --- | --- |
+| 1 | Scheduler | —  | SchedulerOutput（KV allocation） |
+| 2 | Ascend worker | SchedulerOutput | NPU input batch |
+| 3 | NPU input batch | —  | Block table / slot mapping |
+| 4 | Ascend attention backend | Block table / slot mapping | 读写 KV cache buffer |
 
 需要特别注意：
 
@@ -101,19 +98,13 @@ KV offload 把部分 KV cache 从 NPU 显存转移到其他介质，常见是 CP
 
 PD 分离后，prefill 实例生成 KV，decode 实例继续使用 KV。KV transfer 就是把这份 KV 从 producer 交给 consumer。
 
-```mermaid
-sequenceDiagram
-    participant P as Prefill worker
-    participant C as Connector / KV pool
-    participant D as Decode worker
-    participant S as Scheduler
-
-    S->>P: schedule prefill
-    P->>P: write KV cache
-    P->>C: publish or transfer KV
-    C->>D: load KV for decode
-    D->>S: KV ready / continue decode
-```
+| 步骤 | 发起方 | 接收方 | 动作 |
+| --- | --- | --- | --- |
+| 1 | Scheduler | Prefill worker | schedule prefill |
+| 2 | Prefill worker | —  | write KV cache |
+| 3 | Prefill worker | Connector / KV pool | publish or transfer KV |
+| 4 | Connector / KV pool | Decode worker | load KV for decode |
+| 5 | Decode worker | Scheduler | KV ready / continue decode |
 
 KV transfer 的正确性依赖：
 

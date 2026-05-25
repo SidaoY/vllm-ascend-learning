@@ -18,16 +18,11 @@
 
 ## 请求级和 Expert 级不是一回事
 
-```mermaid
-flowchart TB
-    Client[Requests] --> ReqLB[Request / DP / PD load balancer]
-    ReqLB --> InstA[Instance A]
-    ReqLB --> InstB[Instance B]
-    InstA --> MoEA[MoE routing and EPLB]
-    InstB --> MoEB[MoE routing and EPLB]
-    MoEA --> ExpertA[Experts on devices]
-    MoEB --> ExpertB[Experts on devices]
-```
+| 层级 | 组件 | 流向 | 目标 |
+| --- | --- | --- | --- |
+| 请求级 | Client → Request / DP / PD load balancer | → | Instance A / Instance B |
+| Expert 级 | Instance A → MoE routing and EPLB | → | Experts on devices |
+| Expert 级 | Instance B → MoE routing and EPLB | → | Experts on devices |
 
 请求级负载均衡决定请求进入哪个实例或哪个角色。Expert 级负载均衡发生在 MoE 模型内部，决定 expert 副本、放置、迁移和 token load 如何在设备间分布。
 

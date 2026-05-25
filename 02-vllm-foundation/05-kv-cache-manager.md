@@ -38,18 +38,14 @@ Prefix cache：把已经计算过的 prefix block 缓存起来，后续请求命
 
 ## Prefix Caching 的直观流程
 
-```mermaid
-flowchart TD
-    A[New Request Tokens] --> B[Split into blocks]
-    B --> C[Compute block hash]
-    C --> D{Prefix block hit?}
-    D -- Yes --> E[Reuse cached KV block]
-    D -- No --> F[Allocate new block]
-    F --> G[Run prefill and write KV]
-    G --> H[Cache completed block]
-    E --> I[Schedule remaining tokens]
-    H --> I
-```
+| 步骤 | 判断 | 动作 |
+| --- | --- | --- |
+| New Request Tokens | —  | Split into blocks |
+| Split into blocks | —  | Compute block hash |
+| Compute block hash | Prefix block hit? | —  |
+| → Yes | —  | Reuse cached KV block |
+| → No | —  | Allocate new block → Run prefill and write KV → Cache completed block |
+| After reuse or cache | —  | Schedule remaining tokens |
 
 Prefix cache 对 TTFT 很有帮助，但也引入了额外复杂度：
 
