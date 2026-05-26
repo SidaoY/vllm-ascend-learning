@@ -2,7 +2,7 @@
 
 投机推理的目标是优化 decode：用较便宜的方式先提出多个候选 token，再让目标模型一次性验证。接受率足够高时，目标模型不必严格一轮只推进一个 token，从而降低 TPOT、提升 decode 吞吐。
 
-基础概念可以先回看 [vLLM 投机推理基础](../02-vllm-foundation/09-speculative-decoding.md)。本章重点看 vLLM Ascend 中需要适配的边界。
+基础概念已在 [vLLM 核心概念章节](../01-llm-basics/03-prefill-decode-kv-cache.md) 中介绍 decode 瓶颈，本章在此基础上展开 vLLM Ascend 中投机推理的适配边界。
 
 ## 数据流
 

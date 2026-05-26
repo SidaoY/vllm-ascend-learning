@@ -15,7 +15,7 @@ Model executor 可以理解为“把 Hugging Face 风格模型变成高吞吐推
 - 输出 hidden states 或 logits，供后续 sampler 使用。
 - 与 torch compile、custom op、graph mode 等执行优化对接。
 
-对新人来说，先不要从某一个模型文件里迷路。模型文件很多，但它们大多遵循类似结构：embedding -> 多层 decoder layer -> norm -> lm head。
+初次学习时，先不要从某一个模型文件里迷路。模型文件很多，但它们大多遵循类似结构：embedding -> 多层 decoder layer -> norm -> lm head。
 
 ## 从模型配置到模型类
 

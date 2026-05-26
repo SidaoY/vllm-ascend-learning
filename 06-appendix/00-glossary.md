@@ -24,7 +24,7 @@
 | FA3 | Flash Attention 3 | vLLM Ascend 中一类 Flash Attention 3 路径，主要用于 attention 实现一致性，不等同于 KV cache 量化。 | [03-04](../03-vllm-ascend-foundation/04-attention-and-kernels.md) |
 | Graph mode | 图模式 | 通过捕获和复用计算图降低动态执行开销。Ascend 侧通常关注 ACL/NPU graph。 | [02-08](../02-vllm-foundation/08-graph-mode.md) |
 | ACL graph / NPU graph | Ascend 图模式 | Ascend NPU 上的图捕获和 replay 机制，关注 shape、metadata、unsupported op 和同步点。 | [02-08](../02-vllm-foundation/08-graph-mode.md) |
-| Speculative decoding | 投机推理 | 用 proposer 提前提出候选 token，再由 target model 验证，接受率高时提升 decode 吞吐。 | [02-09](../02-vllm-foundation/09-speculative-decoding.md) |
+| Speculative decoding | 投机推理 | 用 proposer 提前提出候选 token，再由 target model 验证，接受率高时提升 decode 吞吐。 | [05-02](../05-key-features/02-speculative-decoding.md) |
 | Proposer | 候选生成器 | 投机推理中产生 draft tokens 的模块，可以是 n-gram、EAGLE、MTP、suffix 等。 | [05-02](../05-key-features/02-speculative-decoding.md) |
 | Draft token | 草稿 token | proposer 生成、等待目标模型验证的候选 token。 | [05-02](../05-key-features/02-speculative-decoding.md) |
 | Rejection sampler | 拒绝采样器 | 投机推理中根据目标模型分布决定 draft tokens 接受或拒绝的组件。 | [05-02](../05-key-features/02-speculative-decoding.md) |

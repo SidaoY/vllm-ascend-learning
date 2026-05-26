@@ -28,6 +28,45 @@ KV cache group：一组共享相同管理方式的 KV cache。普通 full attent
 
 Prefix cache：把已经计算过的 prefix block 缓存起来，后续请求命中后复用，减少 prefill 计算。
 
+## Block 的物理模型
+
+理解 KV cache manager 的关键在于搞清楚一个 block 在物理上到底包含什么。一个常见的误解是"一个 block 包含了所有层的 K/V"，实际并非如此。
+
+### 每层独立 buffer，所有层共享 block table
+
+vLLM 的 KV cache 物理模型可以这样理解：
+
+- 假设模型有 32 层，KV cache 初始化时会分配 32 个 K buffer 和 32 个 V buffer（或 32 对合并的 buffer）。**每层 buffer 是独立的连续大 tensor**，大小都是 `num_blocks × page_size_bytes`。
+- KV cache manager 为请求分配了 block `[5, 7, 12]`，这个结果对 **32 层同时生效**。layer 0 在它的 buffer 里读写 block 5/7/12，layer 31 也在它的 buffer 里读写 block 5/7/12——位置一样，但 buffer 不一样。
+- **Block table 只有一张**（同一个 KV cache group 内），记录了 logical_block_index → physical_block_id。Attention kernel 拿着同一张 block table 去索引每层的独立 buffer。
+
+以请求分配了 `[5, 7, 12]` 为例，各层的物理布局如下（[req] 表示请求占用的 block，其余为其他请求或空闲）：
+
+| 层 | K buffer 物理布局（block 编号） |
+| --- | --- |
+| layer 0 | `[0][1][2][3][4][req:5][6][req:7][8...11][req:12][13...]` |
+| layer 1 | `[0][1][2][3][4][req:5][6][req:7][8...11][req:12][13...]` |
+| ... | 每层布局完全一致 |
+| layer 31 | `[0][1][2][3][4][req:5][6][req:7][8...11][req:12][13...]` |
+
+Block table（所有层共用）：`[5, 7, 12]`
+
+这意味着：KV cache manager 每分配一个 block，实际上是在所有层上**各**分配了一个 block 的空间。请求释放时，所有层对应 block 的引用计数一同归零。
+
+### 逻辑 block 和物理 block
+
+两个概念在代码中有明确区分：
+
+| 概念 | 含义 | 例子 |
+| --- | --- | --- |
+| 逻辑 block index | 请求视角，第几个 block，从 0 递增 | token 0-15 → logical block 0；token 16-31 → logical block 1 |
+| 物理 block id | block pool 分配出的编号，可能离散 | physical block 5, 7, 12 |
+| Block table | 映射关系 | `[logical 0 → phy 5, logical 1 → phy 7, logical 2 → phy 12]` |
+
+Scheduler 和 KV cache manager 操作的是物理 block id。Attention backend 通过 block table 拿到物理 block id 后，按 `block_id × page_size_bytes` 算出每层 buffer 中的偏移去读写 K/V。
+
+> **核心心法：** "所有层共享 block table + 每层独立 buffer"是 PagedAttention 能工作、能高效的根本前提。理解了它，后面 prefix cache 复用 block、slot mapping 计算写入位置、KV transfer 传输 block、quantization 改变 block 内容都会触类旁通。
+
 ## Scheduler 如何使用 KV Cache Manager
 
 每个 step 调度前，scheduler 会问 KV cache manager：如果给某个请求推进 N 个 token，需要多少新 block？当前有没有足够 block？是否命中 prefix cache？

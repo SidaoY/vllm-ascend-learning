@@ -67,7 +67,7 @@ Sampling 也可能影响 graph：
 
 ## Ascend 相关铺垫
 
-Ascend 侧会涉及 ACL graph、NPU graph、图融合和 shape 约束。新人当前只需要先理解：
+Ascend 侧会涉及 ACL graph、图融合和 shape 约束。当前只需要先理解：
 
 - graph 是为了减少重复执行开销。
 - graph 依赖稳定 shape、稳定 buffer 和 backend 支持。

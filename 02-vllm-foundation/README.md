@@ -15,7 +15,6 @@ vLLM 发展很快，具体类名、方法名和文件组织会变化。本章会
 7. [06-model-executor-and-attention.md](06-model-executor-and-attention.md)：模型加载、模型执行、attention layer。
 8. [07-attention-backends-and-pagedattention.md](07-attention-backends-and-pagedattention.md)：attention backend、PagedAttention、attention metadata。
 9. [08-graph-mode.md](08-graph-mode.md)：graph capture 的收益、约束和代码位置。
-10. [09-speculative-decoding.md](09-speculative-decoding.md)：vLLM 投机推理基础。
 
 ## 本阶段目标
 
@@ -33,7 +32,7 @@ vLLM 发展很快，具体类名、方法名和文件组织会变化。本章会
 1. 先读 `00` 到 `03`，只建立请求主流程。
 2. 再读 `04` 和 `05`，理解 scheduler 与 KV cache 的耦合。
 3. 再读 `06` 和 `07`，理解模型执行和 attention backend。
-4. 最后读 `08` 和 `09`，理解 graph mode 和投机推理这些横向优化。
+4. 最后读 `08`，理解 graph mode 这种横向优化。
 
 读本地代码时，优先使用 `rg` 查目录、类名和对象名。不要一开始就追进每个分支、每个模型文件、每个 backend 特化；vLLM 的代码量很大，先保持主线清楚，比记住某个局部实现更重要。
 

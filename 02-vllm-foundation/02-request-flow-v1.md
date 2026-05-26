@@ -63,7 +63,7 @@ engine 收到请求后，不会立即执行模型，而是把请求放入 schedu
 | worker -> scheduler | model runner output | 返回采样 token、logprobs、KV connector 结果、执行统计 |
 | scheduler -> output processor | engine core outputs | 更新请求状态，交给输出层 detokenize 和组装 API 输出 |
 
-这些对象的具体字段会随版本演进，但它们代表的层间边界比较稳定。读代码时抓住“谁生产、谁消费、跨进程/跨设备传不传”会比记住字段名更有用。
+> **核心心法：** 这些对象的具体字段会随版本演进，但它们代表的层间边界比较稳定。读代码时抓住“谁生产、谁消费、跨进程/跨设备传不传”会比记住字段名更有用。
 
 ## Prefill、Decode 和 Chunked Prefill 在流程中的位置
 
