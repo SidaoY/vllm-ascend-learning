@@ -53,8 +53,9 @@
   - [02-patch-mechanism.md](../03-vllm-ascend-foundation/02-patch-mechanism.md)
   - [03-worker-and-model-runner.md](../03-vllm-ascend-foundation/03-worker-and-model-runner.md)
 - 选读：
-  - [04-attention-and-kernels.md](../03-vllm-ascend-foundation/04-attention-and-kernels.md)
-  - [05-distributed-and-kv-transfer.md](../03-vllm-ascend-foundation/05-distributed-and-kv-transfer.md)
+  - [04-operator-system.md](../03-vllm-ascend-foundation/04-operator-system.md)
+  - [05-attention-backend.md](../03-vllm-ascend-foundation/05-attention-backend.md)
+  - [06-distributed-and-kv-transfer.md](../03-vllm-ascend-foundation/06-distributed-and-kv-transfer.md)
 - 验收题：
   1. vLLM Ascend 可以复用 OpenAI entrypoint 和 engine 的核心原因是什么？
   2. 一个改动需要同时改 platform 和 worker 时，patch 应该放在哪个阶段？为什么？

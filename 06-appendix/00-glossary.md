@@ -20,8 +20,8 @@
 | SchedulerOutput | 调度输出 | scheduler 和 worker 的边界对象，告诉 worker 本轮要执行哪些请求和相关 metadata。 | [02-04](../02-vllm-foundation/04-scheduler.md) |
 | Attention backend | 注意力后端 | vLLM 中具体执行 attention 的后端实现。Ascend 侧包含 dense、MLA、SFA、FA3、CP 等路径。 | [02-07](../02-vllm-foundation/07-attention-backends-and-pagedattention.md) |
 | MLA | Multi-head Latent Attention | 一类特殊 attention/KV 表示，常见于 DeepSeek 类模型。 | [01-04](../01-llm-basics/04-attention-and-memory.md) |
-| SFA | Sparse Flash Attention | 面向 DSA/sparse attention 模型的稀疏 attention 路径，不是普通 Ascend attention 的统称。 | [03-04](../03-vllm-ascend-foundation/04-attention-and-kernels.md) |
-| FA3 | Flash Attention 3 | vLLM Ascend 中一类 Flash Attention 3 路径，主要用于 attention 实现一致性，不等同于 KV cache 量化。 | [03-04](../03-vllm-ascend-foundation/04-attention-and-kernels.md) |
+| SFA | Sparse Flash Attention | 面向 DSA/sparse attention 模型的稀疏 attention 路径，不是普通 Ascend attention 的统称。 | [03-05](../03-vllm-ascend-foundation/05-attention-backend.md) |
+| FA3 | Flash Attention 3 | vLLM Ascend 中一类 Flash Attention 3 路径，主要用于 attention 实现一致性，不等同于 KV cache 量化。 | [03-05](../03-vllm-ascend-foundation/05-attention-backend.md) |
 | Graph mode | 图模式 | 通过捕获和复用计算图降低动态执行开销。Ascend 侧通常关注 ACL/NPU graph。 | [02-08](../02-vllm-foundation/08-graph-mode.md) |
 | ACL graph / NPU graph | Ascend 图模式 | Ascend NPU 上的图捕获和 replay 机制，关注 shape、metadata、unsupported op 和同步点。 | [02-08](../02-vllm-foundation/08-graph-mode.md) |
 | Speculative decoding | 投机推理 | 用 proposer 提前提出候选 token，再由 target model 验证，接受率高时提升 decode 吞吐。 | [05-02](../05-key-features/02-speculative-decoding.md) |
@@ -41,10 +41,10 @@
 | MoE | Mixture of Experts | 每层包含多个 expert，router 为 token 选择部分 expert 计算。 | [01-07](../01-llm-basics/07-moe-basics.md) |
 | Expert | 专家 | MoE 中被 router 选择的子网络，通常是 FFN 类结构。 | [01-07](../01-llm-basics/07-moe-basics.md) |
 | EPLB | Expert Parallel Load Balancing | MoE expert 负载均衡，调整 expert 放置、冗余或映射以缓解热点。 | [05-04](../05-key-features/04-load-balancing.md) |
-| PD disaggregation | 预填充/解码分离 | 将 prefill 和 decode 放到不同实例或角色中，提高资源利用率。 | [03-05](../03-vllm-ascend-foundation/05-distributed-and-kv-transfer.md) |
-| KV transfer | KV 传输 | PD 分离或 KV pool 场景中，把 prefill 产生的 KV 交给 decode 或共享存储。 | [03-05](../03-vllm-ascend-foundation/05-distributed-and-kv-transfer.md) |
+| PD disaggregation | 预填充/解码分离 | 将 prefill 和 decode 放到不同实例或角色中，提高资源利用率。 | [03-06](../03-vllm-ascend-foundation/06-distributed-and-kv-transfer.md) |
+| KV transfer | KV 传输 | PD 分离或 KV pool 场景中，把 prefill 产生的 KV 交给 decode 或共享存储。 | [03-06](../03-vllm-ascend-foundation/06-distributed-and-kv-transfer.md) |
 | KV pool | KV 池 | 用共享存储或池化机制管理跨实例 KV cache。 | [05-01](../05-key-features/01-kv-cache-management.md) |
-| HCCL | Huawei Collective Communication Library | Ascend 多卡/多机通信使用的重要 collective communication 后端。 | [03-05](../03-vllm-ascend-foundation/05-distributed-and-kv-transfer.md) |
+| HCCL | Huawei Collective Communication Library | Ascend 多卡/多机通信使用的重要 collective communication 后端。 | [03-06](../03-vllm-ascend-foundation/06-distributed-and-kv-transfer.md) |
 | TTFT | Time To First Token | 从请求进入到首 token 输出的时间，常用于衡量 prefill 和排队体验。 | [01-08](../01-llm-basics/08-performance-metrics.md) |
 | TPOT | Time Per Output Token | 输出 token 平均耗时，常用于衡量 decode 性能。 | [01-08](../01-llm-basics/08-performance-metrics.md) |
 | ITL | Inter-token Latency | 相邻输出 token 的时间间隔，常用于观察流式输出抖动。 | [01-08](../01-llm-basics/08-performance-metrics.md) |
@@ -61,12 +61,12 @@
 | Attention metadata | 注意力元数据 | 在 model runner 里组织好的、送给 attention backend 的元信息，包括 slot mapping、block table、seq len 等。 | [02-07](../02-vllm-foundation/07-attention-backends-and-pagedattention.md) |
 | Monkey patch | 猴子补丁 | 在运行时动态替换已有模块的方法或属性，vLLM Ascend 通过此机制适配上游行为。 | [03-02](../03-vllm-ascend-foundation/02-patch-mechanism.md) |
 | Platform registration | 平台注册 | vLLM 的插件机制，允许 vLLM Ascend 在 `__init__.py` 中注册 NPU backend。 | [03-01](../03-vllm-ascend-foundation/01-platform-registration.md) |
-| Custom op | 自定义算子 | 绕过 PyTorch 自动微分、直接调用底层 API（如 aclnn）实现的算子，通常用于 attention 和量化。 | [03-04](../03-vllm-ascend-foundation/04-attention-and-kernels.md) |
-| aclnn | Ascend Custom Library NN | Ascend CANN 中的神经网络算子库，常用于实现 custom op 或 kernel。 | [03-04](../03-vllm-ascend-foundation/04-attention-and-kernels.md) |
-| DSA | Dynamic Sparse Attention | 一类稀疏 attention 模型（如 DeepSeek），需要特殊的 attention 路径支持。 | [03-04](../03-vllm-ascend-foundation/04-attention-and-kernels.md) |
+| Custom op | 自定义算子 | 绕过 PyTorch 自动微分、直接调用底层 API（如 aclnn）实现的算子，通常用于 attention 和量化。 | [03-04](../03-vllm-ascend-foundation/04-operator-system.md) |
+| aclnn | Ascend Custom Library NN | Ascend CANN 中的神经网络算子库，常用于实现 custom op 或 kernel。 | [03-04](../03-vllm-ascend-foundation/04-operator-system.md) |
+| DSA | Dynamic Sparse Attention | 一类稀疏 attention 模型（如 DeepSeek），需要特殊的 attention 路径支持。 | [03-05](../03-vllm-ascend-foundation/05-attention-backend.md) |
 | AscendStore | Ascend 共享存储 | Ascend 侧的 KV cache 共享存储实现，用于 KV pool 或 PD 分离场景。 | [05-01](../05-key-features/01-kv-cache-management.md) |
-| KV Connector | KV 连接器 | 负责 prefill 和 decode 节点间 KV cache 传输的逻辑组件。 | [03-05](../03-vllm-ascend-foundation/05-distributed-and-kv-transfer.md) |
+| KV Connector | KV 连接器 | 负责 prefill 和 decode 节点间 KV cache 传输的逻辑组件。 | [03-06](../03-vllm-ascend-foundation/06-distributed-and-kv-transfer.md) |
 | External DP | 外部数据并行 | 一种跨实例的数据并行方案，将请求分发到多个 vLLM 实例处理。 | [05-04](../05-key-features/04-load-balancing.md) |
-| EPD | Elastic Prefill-Decode Disaggregation | 弹性 PD 分离方案，允许动态扩展 prefill 或 decode 的角色。 | [03-05](../03-vllm-ascend-foundation/05-distributed-and-kv-transfer.md) |
+| EPD | Elastic Prefill-Decode Disaggregation | 弹性 PD 分离方案，允许动态扩展 prefill 或 decode 的角色。 | [03-06](../03-vllm-ascend-foundation/06-distributed-and-kv-transfer.md) |
 | VLLM_COMMIT | vLLM 版本 commit | CI config 中记录的应与 vLLM Ascend 配合使用的上游 vLLM commit。 | [00-01](../00-orientation/01-repo-map.md) |
 | SOC_VERSION | 硬件型号 | 标识 Ascend 硬件版本的字符串，如 Ascend910B2、Ascend910C。 | [00-02](../00-orientation/02-environment-and-workflow.md) |

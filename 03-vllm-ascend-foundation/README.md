@@ -10,8 +10,9 @@
 2. [01-platform-registration.md](01-platform-registration.md)：NPU platform、环境变量、能力声明。
 3. [02-patch-mechanism.md](02-patch-mechanism.md)：platform patch、worker patch、patch 生命周期。
 4. [03-worker-and-model-runner.md](03-worker-and-model-runner.md)：NPU worker/model runner、input batch、block table。
-5. [04-attention-and-kernels.md](04-attention-and-kernels.md)：Ascend attention、custom ops、Triton/CANN 路径。
-6. [05-distributed-and-kv-transfer.md](05-distributed-and-kv-transfer.md)：分布式、HCCL、KV transfer、PD 分离。
+5. [04-operator-system.md](04-operator-system.md)：算子体系，torch-npu / Triton NPU / CANN custom op，MoE dispatch/combine、FFN、norm、RoPE、sampling。
+6. [05-attention-backend.md](05-attention-backend.md)：Ascend attention 后端，dense attention、MLA、SFA、DSA、FA3、CP attention。
+7. [06-distributed-and-kv-transfer.md](06-distributed-and-kv-transfer.md)：分布式、HCCL、KV transfer、PD 分离。
 
 ## 本阶段目标
 
@@ -23,6 +24,6 @@
 
 ## 阅读建议
 
-先读 `00` 和 `01`，理解 vLLM Ascend 的接入方式；再读 `02`，理解为什么会有 patch；之后读 `03` 和 `04`，进入设备侧执行和 attention；最后读 `05`，理解多卡、多机和 KV transfer。
+先读 `00` 和 `01`，理解 vLLM Ascend 的接入方式；再读 `02`，理解为什么会有 patch；之后读 `03`，进入设备侧执行；再读 `04` 和 `05`，理解算子体系和 attention 后端；最后读 `06`，理解多卡、多机和 KV transfer。
 
 本章仍然遵循一个原则：本地代码用于校准当前实现，但文档不绑定具体行号，也不过度依赖某个方法名。优先理解职责边界和数据流。

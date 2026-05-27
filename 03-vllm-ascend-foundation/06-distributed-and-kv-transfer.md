@@ -24,8 +24,6 @@ Parallel state 管理不同并行维度的 group。常见 group 包括：
 - Context parallel group。
 - PD 分离或 KV transfer 场景中的 producer/consumer group。
 
-新增分布式功能时，先画清楚 rank 拓扑，再写代码。否则很容易出现某个 rank 等待一个永远不会到来的通信。
-
 ## HCCL 与通信
 
 Ascend 多卡通信通常依赖 HCCL。vLLM Ascend 需要把 vLLM 的分布式抽象映射到 NPU 通信能力上，包括：
