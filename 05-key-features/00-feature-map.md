@@ -6,7 +6,7 @@
 
 | 来源 | 流向 | 目标 |
 | --- | --- | --- |
-| Workload (long context / high concurrency / MoE / PD) | → | Scheduler |
+| 场景 (long context / high concurrency / MoE / PD) | → | Scheduler |
 | Scheduler | → | KV cache management |
 | Scheduler | → | Speculative decoding |
 | Scheduler | → | Load balancing |

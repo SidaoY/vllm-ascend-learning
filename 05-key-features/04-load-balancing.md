@@ -64,7 +64,7 @@ PD 分离中，prefill 和 decode 是不同角色。Prefill 主要吃长 prompt 
 
 ## MoE / EPLB
 
-MoE 模型中，每个 token 会被 router 分配到少数 expert。真实 workload 下，expert 负载经常不均衡：某些 expert 很热，某些 expert 很闲。EPLB，Expert Parallel Load Balancing，目标是让 expert 放置和冗余更适合当前流量。
+MoE 模型中，每个 token 会被 router 分配到少数 expert。真实负载下，expert 负载经常不均衡：某些 expert 很热，某些 expert 很闲。EPLB，Expert Parallel Load Balancing，目标是让 expert 放置和冗余更适合当前流量。
 
 EPLB 关注：
 

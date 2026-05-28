@@ -217,7 +217,7 @@
 
 常见原因：
 
-- PCP/DCP 配置与 workload 不匹配。
+- PCP/DCP 配置与测试条件不匹配。
 - 某个 rank 的序列切分或 padding 不一致。
 - CP 通信开销超过 attention 收益。
 - MLA/SFA/特殊 RoPE 与 CP metadata 不匹配。
@@ -241,7 +241,7 @@
 
 常见原因：
 
-- workload 分布变化太快，平衡策略滞后。
+- 负载分布变化太快，平衡策略滞后。
 - expert 热点明显，但迁移粒度或周期不合适。
 - 外部负载均衡和 EPLB 目标不一致。
 - 统计窗口太短导致决策抖动。
@@ -282,7 +282,7 @@
 
 先看：
 
-- benchmark workload 是否完全一致。
+- benchmark 测试条件是否完全一致。
 - graph、attention backend、并行策略、KV cache 配置是否变化。
 - 是否发生 fallback、cache miss、block 不足或通信等待。
 - profiler 中哪个阶段耗时变长。

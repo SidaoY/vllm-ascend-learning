@@ -73,7 +73,7 @@ engine 收到请求后，不会立即执行模型，而是把请求放入 schedu
 - 一个已经有历史 KV 的请求每轮推进少量 token，表现为 decode。
 - 一个很长 prompt 被拆成多轮推进，表现为 chunked prefill。
 
-所以在 vLLM 的实现里，prefill/decode 更像 workload 形态，而不是完全独立的两套系统。
+所以在 vLLM 的实现里，prefill/decode 更像计算形态，而不是完全独立的两套系统。
 
 ## 代码入口
 
