@@ -131,12 +131,11 @@ Greedy 模式最简单：draft token 被接受，当且仅当它等于 target mo
 
 假设 proposer 提出 3 个 draft token，target model 验证结果如下：
 
-```text
-Position:     pos 0    pos 1    pos 2
-draft:        "的"     "是"     "一"
-target argmax: "的"    "在"     "个"
-              ✅       ❌       (no longer verified)
-```
+| Position | Draft | Target argmax | Result |
+| --- | --- | --- | --- |
+| pos 0 | "的" | "的" | ✅ 接受 |
+| pos 1 | "是" | "在" | ❌ 拒绝，输出 target argmax "在" |
+| pos 2 | "一" | "个" | — 不再验证 |
 
 - pos 0：draft "的" == target argmax "的" → 接受
 - pos 1：draft "是" != target argmax "在" → 拒绝，输出 target argmax "在"
@@ -146,12 +145,11 @@ target argmax: "的"    "在"     "个"
 
 **示例 2：全部接受**
 
-```text
-Position:     pos 0    pos 1    pos 2
-draft:        "的"     "是"     "一"
-target argmax: "的"    "是"     "一"
-              ✅       ✅       ✅
-```
+| Position | Draft | Target argmax | Result |
+| --- | --- | --- | --- |
+| pos 0 | "的" | "的" | ✅ 接受 |
+| pos 1 | "是" | "是" | ✅ 接受 |
+| pos 2 | "一" | "一" | ✅ 接受 |
 
 全部接受后，还会追加一个 bonus token（从 target 分布单独采样）：
 
@@ -206,7 +204,7 @@ After normalization     = [0, 0.5, 0.5]
 
 ```text
 Request 0: draft = [t0, t1, t2], num_draft=3
-Request 1: draft = [u0, u1],      num_draft=2
+Request 1: draft = [u0, u1],     num_draft=2
 
 target model forward:
   logits shape = [3+2+2, vocab_size] = [7, vocab_size]
