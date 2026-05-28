@@ -69,6 +69,79 @@ MoE 模型会把 token 分发给不同 expert。此时 EP/EPLB 负责 expert 维
 2. [CP 并行](03-context-parallelism.md)
 3. [测试、CI 与 Nightly Workflow](../04-development-practice/01-testing-ci-and-nightly.md)
 
+## 特性兼容性矩阵
+
+四个特性不是任意组合都能正常工作。下表总结了已知的兼容性关系：
+
+|  | KV Cache 管理 | 投机推理 | CP 并行 | 负载均衡 |
+| --- | :---: | :---: | :---: | :---: |
+| **KV Cache 管理** | — | ✅ lookahead KV 预留 | ✅ block size 对齐 | ✅ KV 容量影响调度 |
+| **投机推理** | ✅ lookahead KV 预留 | — | ⚠️ DCP metadata 需适配 | ✅ 不影响 |
+| **CP 并行** | ✅ block size 对齐 | ⚠️ DCP metadata 需适配 | — | ✅ 不影响 |
+| **负载均衡** | ✅ KV 容量影响调度 | ✅ 不影响 | ✅ 不影响 | — |
+
+图例：✅ 兼容且已验证 | ⚠️ 兼容但需额外适配 | ❌ 不兼容或未验证
+
+**需要额外适配的组合：**
+
+- **投机推理 + CP**：DCP 下每轮 decode token 数不再是 1，metadata 中的 seq_len、position、block table 需要适配 `(K+1)` 的 verify shape。
+- **投机推理 + PD**：prefill 实例产生的 KV 需要包含 draft token 的 lookahead 位置，decode 实例的 rejection sampler 需要知道哪些位置是 draft。
+- **CP + PD**：prefill 和 decode 实例的 CP 切分方式必须一致，connector 传递的 KV metadata 需要包含 CP rank 信息。
+- **CP + KV Transfer**：`cp_kv_cache_interleave_size` 必须与 `block_size` 对齐（通常都是 128）。
+- **EPLB + PD**：prefill 和 decode 实例的 expert map 可能不同（因为 EP size 不同），需要分别管理。
+
+## 真实场景叠加示例
+
+### 场景 1：长上下文 + 高并发在线服务
+
+```text
+Requirements: 128K context, 100+ concurrency, MoE model
+
+Combined features:
+  CP (PCP+DCP)  → Distribute long-sequence attention and KV pressure
+  KV Cache      → Block-based management + prefix cache reuse system prompt
+  EPLB          → MoE expert load balancing
+  External DP   → Request-level load balancing
+
+Key validation points:
+  - Does PCP_size × DCP_size × TP_size × EP_size world size exceed hardware?
+  - Can prefix cache still hit after CP partitioning?
+  - Is p99 latency acceptable during EPLB migration?
+```
+
+### 场景 2：低延迟对话服务
+
+```text
+Requirements: TTFT < 200ms, TPOT < 50ms, high interaction frequency
+
+Combined features:
+  Speculative Decoding → Reduce decode per-step token bottleneck
+  KV Cache             → Prefix cache reuse conversation history
+  Graph Mode           → Eliminate kernel launch overhead
+
+Key validation points:
+  - Is acceptance rate consistently > 70%?
+  - Does graph capture cover speculative decoding verify shapes?
+  - Does lookahead KV reservation cause block shortage?
+```
+
+### 场景 3：PD 分离 + 大规模 MoE
+
+```text
+Requirements: PD separation deployment, MoE model, high throughput
+
+Combined features:
+  PD Separation → Independent prefill/decode scaling
+  KV Transfer   → KV transfer from prefill to decode
+  EPLB          → Separate expert balancing for prefill and decode
+  External DP   → Route requests to appropriate prefill/decode instances
+
+Key validation points:
+  - Is KV transfer latency less than prefill time?
+  - Is EPLB correct when prefill and decode have different EP sizes?
+  - Does connector metadata include complete CP/EP info?
+```
+
 ## 常用测试入口
 
 - KV cache / KV transfer：`$PATH_TO_VLLM_ASCEND/tests/ut/kv_connector`、`$PATH_TO_VLLM_ASCEND/tests/ut/worker/test_block_table.py`

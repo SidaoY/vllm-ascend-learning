@@ -53,6 +53,185 @@ Suffix proposer：利用 suffix 匹配提出候选，对代码编辑、重复上
 
 Extract hidden states：它不是真正为了加速推理，而是为了抽取目标模型中间 hidden states，通常用于 EAGLE 类 draft 模型的数据准备。
 
+### MTP 模型专项说明
+
+Multi Token Prediction 是模型原生支持一次预测多个 future token 的能力。与 n-gram 或 EAGLE 不同，MTP 不需要额外的 draft 模型——proposer 本身就是目标模型的一部分。
+
+**DeepSeek-V3 / DeepSeek-R1 的 MTP：**
+
+DeepSeek 系列模型的 MTP 通过额外的 MTP module 实现。每个 MTP module 包含独立的 embedding layer、output head 和共享的 transformer block。关键适配点：
+
+- `patch_deepseek_mtp.py`：Ascend 侧对 DeepSeek MTP 的 patch，主要处理 MTP module 的权重加载和前向传播。
+- MTP 的 hidden states 来自目标模型的中间层，需要正确截取和传递。
+- MTP 的 embedding 和 output head 与主模型共享 tokenizer，但权重独立。
+
+**Qwen3-Next 的 MTP：**
+
+Qwen3-Next 的 MTP 实现与 DeepSeek 不同，通过 `patch_qwen3_next_mtp.py` 适配：
+
+- Qwen3-Next 的 MTP head 结构与主模型的 lm_head 共享部分权重。
+- 需要正确处理 MTP head 的 TP 切分（与主模型 TP 配置一致）。
+
+**MTP 的通用排查点：**
+
+- MTP module 的权重是否正确加载（检查 checkpoint 路径和 key mapping）。
+- MTP 的 hidden states 截取位置是否正确（不同模型可能从不同层截取）。
+- MTP 的 TP 配置是否与主模型一致。
+- MTP 输出的 token 是否需要经过与主模型相同的 logits processors。
+
+## 投机推理与其他特性的组合
+
+### 投机推理 + PD 分离
+
+PD 分离场景下，prefill 和 decode 在不同实例上运行。投机推理的 proposer 和 target verify 都在 decode 实例上执行，但需要注意：
+
+- **KV 预留**：prefill 实例产生的 KV 需要为 draft token 预留 lookahead 位置。如果 prefill 时不知道 decode 会使用投机推理，KV block 数量可能不足。
+- **Metadata 传递**：connector 传递的 KV metadata 需要包含"哪些位置是 draft token 的 KV"，以便 decode 实例的 rejection sampler 正确处理。
+- **Proposer 状态**：如果 proposer 依赖 prefill 阶段产生的 hidden states（如 EAGLE），这些 hidden states 也需要通过 connector 传递。
+
+### 投机推理 + CP 并行
+
+CP 与投机推理组合时，主要挑战在 DCP 侧：
+
+- **Verify shape 变化**：DCP 下每轮 decode 的 token 数从 1 变为 `K+1`（K 个 draft + 1 个 bonus 位置）。DCP metadata 中的 seq_len、position、block table 都需要适配这个变化。
+- **AllGather Q 的 shape**：DCP 的 all_gather Q 操作需要处理 `[B*(K+1), num_heads, head_dim]` 的 shape，而非通常的 `[B, num_heads, head_dim]`。
+- **FAUpdate 合并**：多个 rank 的 attention 输出合并时，需要知道哪些位置是 draft token（可能被拒绝），哪些是 bonus token（一定被接受）。
+
+### 投机推理 + Graph Mode
+
+投机推理与 graph mode 的组合是最容易出问题的场景之一：
+
+- **Capture sizes**：graph 需要预先 capture 固定的 batch size 和 token 数。投机推理的 verify token 数是 `B * (K+1)`，需要确保 graph capture 覆盖了这个 shape。
+- **动态控制流**：rejection sampler 中的接受/拒绝逻辑是动态的（取决于概率比较结果），graph 无法 capture 这部分。通常 rejection sampler 在 graph 之外执行。
+- **Proposer 是否支持 graph**：n-gram proposer 通常不支持 graph（涉及 CPU 侧的文本匹配），EAGLE 和 MTP proposer 可能支持 graph。
+
+排查 graph + 投机推理问题时，建议先在 eager 模式下验证正确性，再逐步开启 graph。
+
+## 接受/拒绝机制详解
+
+投机推理的核心是 rejection sampler。它的任务不是"判断 draft token 对不对"，而是"保证输出分布与目标模型一致"。理解这一点是理解整个投机推理的关键。
+
+### 三种 token 角色
+
+一轮投机推理中涉及三种 token：
+
+| 角色 | 含义 | 来源 |
+| --- | --- | --- |
+| accepted token | 被接受的 draft token | proposer 提出，验证通过 |
+| recovered token | 拒绝后重新采样的修正 token | 从 `max(0, target_prob - draft_prob)` 分布中采样 |
+| bonus token | 全部 draft 被接受后的额外 token | 仅从 target 分布采样 |
+
+输出序列 = accepted tokens + recovered token（如果有拒绝）+ bonus token（如果全部接受）。
+
+### Greedy 模式下的接受/拒绝
+
+Greedy 模式最简单：draft token 被接受，当且仅当它等于 target model 的 argmax。
+
+**示例 1：部分接受**
+
+假设 proposer 提出 3 个 draft token，target model 验证结果如下：
+
+```text
+Position:     pos 0    pos 1    pos 2
+draft:        "的"     "是"     "一"
+target argmax: "的"    "在"     "个"
+              ✅       ❌       (no longer verified)
+```
+
+- pos 0：draft "的" == target argmax "的" → 接受
+- pos 1：draft "是" != target argmax "在" → 拒绝，输出 target argmax "在"
+- pos 2：因为 pos 1 已被拒绝，pos 2 不再验证
+
+最终输出：`["的", "在"]`，本轮前进了 2 个 token。
+
+**示例 2：全部接受**
+
+```text
+Position:     pos 0    pos 1    pos 2
+draft:        "的"     "是"     "一"
+target argmax: "的"    "是"     "一"
+              ✅       ✅       ✅
+```
+
+全部接受后，还会追加一个 bonus token（从 target 分布单独采样）：
+
+```text
+bonus: target sample → "种"
+```
+
+最终输出：`["的", "是", "一", "种"]`，本轮前进了 4 个 token。
+
+### 随机采样模式下的接受/拒绝
+
+随机采样模式更复杂。对于每个 draft token，接受条件为：
+
+```text
+target_prob(draft_token) / draft_prob(draft_token) >= uniform_random
+```
+
+其中 `uniform_random` 是 [0, 1) 之间的均匀随机数。
+
+**示例 3：随机模式下的接受与拒绝**
+
+假设词表为 {A, B, C}，proposer 提出 draft token "A"：
+
+```text
+draft_probs:  [A: 0.7, B: 0.2, C: 0.1]
+target_probs: [A: 0.5, B: 0.3, C: 0.2]
+uniform_random = 0.6
+```
+
+计算接受条件：`target_prob(A) / draft_prob(A) = 0.5 / 0.7 ≈ 0.714`
+
+`0.714 >= 0.6` → 接受！输出 "A"。
+
+如果 `uniform_random = 0.8`，则 `0.714 < 0.8` → 拒绝。此时需要从修正分布中采样 recovered token：
+
+```text
+Corrected distribution = max(0, target_probs - draft_probs)
+                       = max(0, [0.5-0.7, 0.3-0.2, 0.2-0.1])
+                       = [0, 0.1, 0.1]
+After normalization     = [0, 0.5, 0.5]
+```
+
+从 {B: 0.5, C: 0.5} 中采样 recovered token。注意 "A" 的概率被置为 0——这正是"拒绝"的含义：draft token 被排除后，从剩余概率中重新采样。
+
+**为什么这个算法保证分布正确？**
+
+直觉上：如果 draft 模型对某个 token 过于自信（draft_prob 很高），而 target 认为它没那么好（target_prob 较低），则 `target_prob / draft_prob` 变小，更容易被拒绝。被拒绝后从 `max(0, target - draft)` 中重采样，恰好补回了 target 分布中"被 draft 高估"的部分。数学上这保证了输出分布严格等于 target model 的分布。
+
+### 完整流程示例
+
+假设 batch 中有 2 个请求，proposer 分别提出 3 个和 2 个 draft token：
+
+```text
+Request 0: draft = [t0, t1, t2], num_draft=3
+Request 1: draft = [u0, u1],      num_draft=2
+
+target model forward:
+  logits shape = [3+2+2, vocab_size] = [7, vocab_size]
+  （3 个 draft + 2 个 draft + 2 个 bonus 位置）
+```
+
+Rejection sampler 的处理顺序：
+
+1. 从 bonus 位置采样 bonus token（每个请求一个）。
+2. 对 draft 位置应用 logits processors（temperature、top-k、top-p、penalties）。
+3. 对 greedy 请求：逐位置比较 draft_token_id == target_argmax。
+4. 对随机请求：逐位置计算 `target_prob / draft_prob >= uniform_random`。
+5. 被拒绝的位置，从修正分布采样 recovered token。
+6. 全部接受时，追加 bonus token。
+7. `parse_output` 过滤掉 PLACEHOLDER_TOKEN_ID，输出最终 token 列表。
+
+### 关键实现细节
+
+从代码中可以看到几个值得注意的设计：
+
+- **float64 随机数**：`uniform_probs` 使用 float64 而非 float32，因为 float32 有非零概率采样到精确的 0.0（PyTorch issue #16706），会导致接受条件异常。
+- **in-place 更新 logits**：temperature scaling 和 top-k/top-p 直接修改 logits tensor 以节省显存。
+- **Greedy 快速路径**：全部请求都是 greedy 时，跳过 target_probs 的 softmax 计算和 recovered token 采样，直接比较 argmax。
+- **synthetic 模式**：用于测试和调试，用预设的接受率替代真实概率比较，不依赖 draft_probs。
+
 ## Graph 和 shape
 
 投机推理和 graph 的关系比较敏感。假设每次 proposer 提出 `K` 个 speculative tokens，target verify 往往需要处理 `K + 1` 个 token，因为还要包含目标模型自身修正位置。batch size 为 `B` 时，verify shape 可能接近 `B * (K + 1)`。
