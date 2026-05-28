@@ -72,7 +72,7 @@ vLLM 的执行优化可能出现在多个层次：
 - torch compile 优化模型片段。
 - graph capture 降低重复 decode 的启动开销。
 
-这些优化都可能影响性能和可调试性。新同学读代码时先理解 eager 路径，再看 compile/graph/custom op，否则很容易被优化路径绕晕。
+这些优化都可能影响性能和可调试性。读代码时先理解 eager 路径，再看 compile/graph/custom op，否则很容易被优化路径绕晕。
 
 ## 代码入口
 

@@ -21,7 +21,7 @@ flowchart TD
     J -->|finish| K[Detokenize and return output]
 ```
 
-这张图故意省略了多进程、分布式和设备细节。新人先抓住一件事：vLLM 不是“来一个请求就完整跑完一个请求”，而是在 engine 主循环里不断把多个请求的下一步工作混合调度到设备上执行。
+这张图故意省略了多进程、分布式和设备细节。先抓住一件事：vLLM 不是“来一个请求就完整跑完一个请求”，而是在 engine 主循环里不断把多个请求的下一步工作混合调度到设备上执行。
 
 ## Request、Prompt、Token
 

@@ -1,6 +1,6 @@
 # 05 Key Features
 
-本部分深入团队当前关键特性。每个专题建议先讲业务/性能动机，再讲 vLLM 基础机制，最后讲 vLLM Ascend 实现和测试。具体测试、CI、性能观测和故障排查方法在 `../04-development-practice/README.md` 中先统一学习。
+本部分深入关键特性。每个专题建议先讲业务/性能动机，再讲 vLLM 基础机制，最后讲 vLLM Ascend 实现和测试。具体测试、CI、性能观测和故障排查方法在 `../04-development-practice/README.md` 中先统一学习。
 
 ## 文档清单
 

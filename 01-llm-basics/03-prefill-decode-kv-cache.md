@@ -49,7 +49,7 @@ Decode 的单步计算量小，但需要执行很多轮。每轮都要读历史 
 layers x tokens x kv_heads x head_dim x 2(K,V)
 ```
 
-真实代码中会因为 backend、dtype、block size、MLA、量化、内存布局而变化。新人先记住：上下文越长、层数越多、KV heads 越多、head dim 越大，KV cache 越大。
+真实代码中会因为 backend、dtype、block size、MLA、量化、内存布局而变化。先记住：上下文越长、层数越多、KV heads 越多、head dim 越大，KV cache 越大。
 
 ## KV Cache 对显存的影响
 

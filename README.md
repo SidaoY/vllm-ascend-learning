@@ -1,6 +1,6 @@
 # vLLM Ascend 新员工学习路线
 
-这套资料面向刚接触大模型推理、vLLM 和 vLLM Ascend 的同学，目标是从基础概念逐步过渡到真实代码，再进入团队关键特性的设计与开发实践。
+这套资料面向刚接触大模型推理、vLLM 和 vLLM Ascend 的同学，目标是从基础概念逐步过渡到真实代码，再进入关键特性的设计与开发实践。
 
 当前阶段只规划目录结构和每章写作范围，不展开正文。后续建议按编号顺序补全文档，每篇控制在一个明确主题内，并在文末保留“代码阅读入口”和“思考与探索”。
 
@@ -17,7 +17,7 @@
 5. [04-development-practice](04-development-practice/README.md)
    - 具体开发实践：开发流程、测试、CI/nightly workflow、性能观测和调优、故障排查。
 6. [05-key-features](05-key-features/README.md)
-   - 团队关键特性：KV cache 管理、投机推理、CP 并行、负载均衡。
+   - 关键特性：KV cache 管理、投机推理、CP 并行、负载均衡。
 7. [06-appendix](06-appendix/README.md)
    - 术语表、代码导航、实验记录模板、资料索引。
 
@@ -41,7 +41,7 @@
 这些主题不一定单独成章，但写正文时应在相关章节中穿插。
 
 - Prefix caching 和 disaggregated prefill：它们和 KV 复用、PD 分离、KV transfer、负载均衡经常一起出现。
-- Patch 生命周期和上游同步策略：新人需要知道什么时候该 patch、什么时候该推动上游修复、patch 如何退出。
+- Patch 生命周期和上游同步策略：需要知道什么时候该 patch、什么时候该推动上游修复、patch 如何退出。
 - 多模型、多模态、tool call、reasoning output 对请求入口和输出后处理的影响。
 - 上游 vLLM 版本变化对 vLLM Ascend patch 和 CI 的影响。
 
@@ -74,4 +74,4 @@
 - 学习资料内部链接使用相对 Markdown 链接，方便在文档站点或 IDE 中点击跳转。
 - 对复杂流程优先画 Mermaid 图，文字只解释关键分叉。
 - 每个专题至少给出一个可运行命令、一个推荐断点或日志位置、一个常见问题。
-- 面向新人时先解释稳定抽象，再提醒版本差异；避免一上来陷入历史包袱。
+- 先解释稳定抽象，再提醒版本差异；避免一上来陷入历史包袱。
