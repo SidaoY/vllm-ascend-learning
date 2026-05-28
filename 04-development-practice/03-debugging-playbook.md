@@ -228,7 +228,7 @@
 - 对比不开 CP、开 CP 的 token ids 和 logprobs。
 - 查看 `$PATH_TO_VLLM_ASCEND/docs/source/user_guide/feature_guide/context_parallel.md`。
 
-## EPLB 或负载均衡波动
+## 负载均衡波动
 
 现象：MoE 场景中某些卡很忙，expert 迁移后延迟抖动，吞吐周期性波动。
 

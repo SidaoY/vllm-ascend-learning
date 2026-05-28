@@ -1,6 +1,6 @@
 # 性能观测与调优
 
-性能调优的第一步不是改参数，而是把问题说清楚：是在追求更低 TTFT、更低 TPOT、更高吞吐、更稳定延迟，还是更高资源利用率？这些目标经常互相牵制。比如更大的 batch 可能提高吞吐，但让个别请求等待更久；更激进的 graph 捕获可能降低 kernel overhead，但对动态 shape 更敏感。
+进行性能调优之前，首先需要明确问题：是在追求更低 TTFT、更低 TPOT、更高吞吐、更稳定延迟，还是更高资源利用率？这些目标经常互相牵制。比如更大的 batch 可能提高吞吐，但让个别请求等待更久；更激进的 graph 捕获可能降低 kernel overhead，但对动态 shape 更敏感。
 
 ## 常用指标
 
@@ -18,7 +18,7 @@
 
 看指标时要区分 prefill 和 decode。长 prompt 场景主要看 TTFT、prefill throughput 和 KV cache 压力；高并发短输出场景更容易暴露 scheduler、decode batch、graph replay 和 sampling overhead。
 
-## Workload 设计
+## 测试条件
 
 一次有意义的 benchmark 至少要固定：
 
@@ -32,7 +32,7 @@
 - graph、prefix caching、chunked prefill、spec decode 等开关。
 - vLLM commit、vLLM Ascend commit、CANN、torch-npu、硬件和镜像。
 
-如果 workload 不稳定，结论也会不稳定。特别是线上 trace、随机 prompt 和开放式生成，最好保留数据集版本和随机种子。
+如果测试条件不稳定，结论也会不稳定。特别是线上 trace、随机 prompt 和开放式生成这类有随机性的测试方式，最好保留数据集版本和随机种子。
 
 ## Benchmark 常用入口
 
@@ -110,7 +110,7 @@ NPU 侧主要关注：
 
 性能回归建议按这个顺序：
 
-1. 固定 workload 和环境，确认回归可以重复出现。
+1. 固定参数和环境，确认回归可以重复出现。
 2. 对比 vLLM commit、vLLM Ascend commit、镜像、CANN、torch-npu。
 3. 对比启动参数和环境变量，尤其是 graph、attention、KV cache、并行策略。
 4. 看服务指标，判断问题更像排队、prefill、decode、KV block、sampling 还是通信。
